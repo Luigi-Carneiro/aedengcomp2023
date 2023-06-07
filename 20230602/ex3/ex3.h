@@ -1,0 +1,20 @@
+#define MAX 100
+
+typedef struct No {
+    int elemento;
+    int proximo;
+} No;
+
+typedef struct {
+    No lista[MAX];
+    int primeiro;
+    int quantidade;
+    int ultimo;
+} Lista;
+
+void inicializar(Lista *lista);
+void inserir(Lista *lista, int elemento);
+void print(Lista lista);
+void copiarLista(Lista *l1, Lista *l2);
+Lista intercalar(Lista *lista, Lista *copia);
+void concatenar(Lista *lista, Lista *copia);
