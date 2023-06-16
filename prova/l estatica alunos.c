@@ -190,3 +190,7 @@ int main(){
     PosMIdade = MaiorIdade(&m);
     printf("Cod: %d, Nome: %s, Idade: %d, Filhos: %d \n", m.turma[PosMIdade].alun.cod_aluno, m.turma[PosMIdade].alun.nome, m.turma[PosMIdade].alun.idade, m.turma[PosMIdade].alun.filhos);
 }
+// cd "endereco"
+// gcc -c fun.c
+// gcc fun.o main.c -o main
+// ./main
