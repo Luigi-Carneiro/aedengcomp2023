@@ -1,155 +1,192 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-
-#define MAX 100
+#include <stdbool.h>
+#define MAX 10
 
 typedef struct{
-    int codigo;
-    char nome[50];
+    int cod_aluno;
+    char *nome;
     int idade;
-    int nfilhos;
-    int proximo;
+    int filhos;
 } ALUNO;
 
 typedef struct{
-    ALUNO elementos[MAX];
-    int *primeiro;
-    int *proximo;
-    int tamanho;
-} LISTA;
+    ALUNO alun;
+    int proximo;
 
-void criarLista(LISTA *lista){
-    lista->primeiro = NULL;
-    lista->proximo = &lista->elementos[0].proximo;
-    lista->tamanho = 0;
+} ELEMENTO;
 
-    for (int i = 0; i < MAX_ELEMENTOS - 1; i++){
-        lista->elementos[i].proximo = i + 1;
+typedef struct{
+    ELEMENTO turma[MAX];
+    int inicio;
+    int diponivel;
+
+} LISTATURMA;
+
+void inicializarturma(LISTATURMA *m){
+    int i;
+    for (i = 0; i < MAX - 1; i++){
+        m->turma[i].proximo = i + 1;
     }
-
-    lista->elementos[MAX_ELEMENTOS - 1].proximo = NULL;
+    m->turma[MAX - 1].proximo = -1;
+    m->inicio = -1;
+    m->diponivel = 0;
 }
 
-void inserirElemento(LISTA *lista, ALUNO aluno){
-    if (lista->proximo != NULL){
-        int *posicaoInserir = lista->proximo;
-        lista->proximo = &lista->elementos[*posicaoInserir].proximo;
-        lista->elementos[*posicaoInserir] = aluno;
+int tamanholista(LISTATURMA *m){
+    int tam = 0;
+    int i = m->inicio;
+    while (i != -1){
+        tam++;
+        i = m->turma[i].proximo;
+    }
+    return tam;
+}
 
-        if (lista->primeiro == NULL){
-            lista->primeiro = posicaoInserir;
-            lista->elementos[*posicaoInserir].proximo = NULL;
-        }
-        else{
-            int *posicaoAtual = lista->primeiro;
-            int *posicaoAnterior = NULL;
+int buscarmatricula(LISTATURMA *m, int cod_aluno){
+    int i = m->inicio;
+    while (i != -1 && m->turma[i].alun.cod_aluno < cod_aluno){
+        i = m->turma[i].proximo;
+    }
+    if (i != -1 && m->turma[i].alun.cod_aluno == cod_aluno){
+        return 1;
+    }
+    else
+        return -1;
+}
 
-            while (posicaoAtual != NULL && strcmp(lista->elementos[*posicaoAtual].nome, aluno.nome) < 0){
-                posicaoAnterior = posicaoAtual;
-                posicaoAtual = &lista->elementos[*posicaoAtual].proximo;
-            }
+int obterno(LISTATURMA *m){
+    int disp = m->diponivel;
+    if (m->diponivel != -1){
+        m->diponivel = m->turma[disp].proximo;
+    }
+    return disp;
+}
 
-            if (posicaoAnterior == NULL){
-                lista->elementos[*posicaoInserir].proximo = lista->primeiro;
-                lista->primeiro = posicaoInserir;
-            }
-            else{
-                lista->elementos[*posicaoInserir].proximo = lista->elementos[*posicaoAnterior].proximo;
-                lista->elementos[*posicaoAnterior].proximo = posicaoInserir;
-            }
-        }
+bool inserirAluno_Ordenado(LISTATURMA *m, ALUNO novo_aluno){
+    if (m->diponivel == -1){
+        return false;
+    }
+    int i = m->inicio;
+    int pos_inserir = -1;
+    while ((i != -1) && (novo_aluno.cod_aluno > m->turma[i].alun.cod_aluno)){
+        pos_inserir = i;
+        i = m->turma[i].proximo;
+    }
+    if (i != -1 && novo_aluno.cod_aluno == m->turma[pos_inserir].alun.cod_aluno){
+        return false;
+    }
 
-        lista->tamanho++;
+    i = obterno(m);
+    m->turma[i].alun = novo_aluno;
+    if (pos_inserir == -1){
+        m->turma[i].proximo = m->inicio;
+        m->inicio = i;
     }
     else{
-        printf("Lista cheia\n");
+        m->turma[i].proximo = m->turma[pos_inserir].proximo;
+        m->turma[pos_inserir].proximo = i;
     }
 }
 
-int QuantidadeElementos(LISTA *lista){
-    return lista->tamanho;
-}
-
-int buscarElemento(LISTA *lista, int codigo){
-    int *posicaoAtual = lista->primeiro;
-
-    while (posicaoAtual != NULL){
-        if (lista->elementos[*posicaoAtual].codigo == codigo){
-            return *posicaoAtual;
-        }
-        posicaoAtual = &lista->elementos[*posicaoAtual].proximo;
+bool inserirAluno_Nao_Ordenado(LISTATURMA *lista, ALUNO novo_aluno){
+    if (lista->diponivel == -1){
+        return false;
     }
 
-    return -1;
-}
+    int i = obterno(lista);
 
-void excluirElemento(LISTA *lista, int codigo){
-    int *posicaoAtual = lista->primeiro;
-    int *posicaoAnterior = NULL;
-
-    while (posicaoAtual != NULL && lista->elementos[*posicaoAtual].codigo != codigo){
-        posicaoAnterior = posicaoAtual;
-        posicaoAtual = &lista->elementos[*posicaoAtual].proximo;
-    }
-
-    if (posicaoAtual != NULL){
-        if (posicaoAnterior == NULL){
-            lista->primeiro = lista->elementos[*posicaoAtual].proximo;
-        }
-        else{
-            lista->elementos[*posicaoAnterior].proximo = lista->elementos[*posicaoAtual].proximo;
-        }
-
-        lista->elementos[*posicaoAtual].proximo = lista->proximo;
-        lista->proximo = posicaoAtual;
-        lista->tamanho--;
-
+    if (i == 0){
+        lista->turma[0].alun = novo_aluno;
+        lista->inicio = 0;
+        lista->turma[0].proximo = -1;
     }
     else{
-        printf("Aluno não encontrado\n");
+        lista->turma[i].alun = novo_aluno;
+        lista->turma[i - 1].proximo = i;
+        lista->turma[i].proximo = -1;
     }
 }
 
-void imprimirLista(LISTA *lista){
-    printf("Lista de Alunos:\n");
-    int *posicaoAtual = lista->primeiro;
+void mostrarlista(LISTATURMA *lista){
+    int i = lista->inicio;
+    while (i != -1){
+        printf("Aluno: %d\n", i);
+        printf("Codigo Aluno: %d\n", lista->turma[i].alun.cod_aluno);
+        printf("Nome: %s\n", lista->turma[i].alun.nome);
+        printf("Idade  %d\n", lista->turma[i].alun.idade);
+        printf("Filhos: %d\n", lista->turma[i].alun.filhos);
+        i = lista->turma[i].proximo;
+    }
+}
 
-    while (posicaoAtual != NULL){
-        ALUNO aluno = lista->elementos[*posicaoAtual];
-        printf("Código: %d, Nome: %s, Idade: %d, Número de Filhos: %d\n",
-               aluno.codigo, aluno.nome, aluno.idade, aluno.nfilhos);
-        posicaoAtual = &lista->elementos[*posicaoAtual].proximo;
+bool excluiraluno(LISTATURMA *m, int codA){
+
+    int i = m->diponivel;
+    int anterior = -1;
+
+    while (i != -1 && m->turma[i].alun.cod_aluno < codA){
+        anterior = i;
+        i = m->turma[i].proximo;
+    }
+    if (i != -1 && m->turma[i].alun.cod_aluno != codA){
+        return false;
+    }
+    if (anterior == -1){
+        m->inicio = m->turma[i].proximo;
+    }
+    else{
+        m->turma[anterior].proximo = m->turma[i].proximo;
     }
 
-    printf("\n");
+    alocar(m, i);
+    return true;
+}
+
+void alocar(LISTATURMA *m, int i){
+
+    m->turma[i].proximo = m->diponivel;
+    m->diponivel = i;
+}
+
+int MaiorIdade(LISTATURMA *lista){
+    int i = lista->inicio;
+    int IdadeM = lista->turma[i].alun.idade;
+    int pos;
+    while (i != -1){
+
+        if (lista->turma[i].alun.idade > IdadeM){
+            IdadeM = lista->turma[i].alun.idade;
+            pos = i;
+        }
+        i = lista->turma[i].proximo;
+    }
+    return pos;
 }
 
 int main(){
-    LISTA lista;
-    criarLista(&lista);
+    LISTATURMA m;
+    int PosMIdade;
+    inicializarturma(&m);
+    printf("%d \n", tamanholista(&m));
 
-    ALUNO aluno1 = {1, "João Silva", 20, 0};
-    ALUNO aluno2 = {2, "Maria Santos", 22, 1};
+    ALUNO aluno1 = {001, "Daniel", 21, 0};
 
-    inserirElemento(&lista, aluno1);
-    inserirElemento(&lista, aluno2);
+    inserirAluno_Nao_Ordenado(&m, aluno1);
+    ALUNO aluno2 = {002, "Suza", 19, 0};
 
-    imprimirLista(&lista);
+    inserirAluno_Nao_Ordenado(&m, aluno1);
+    ALUNO aluno3 = {003, "Danilo", 24, 1};
 
-    int posicao = buscarElemento(&lista, 2);
-    if (posicao != -1){
-        printf("Aluno com código 2 encontrado na posição %d\n", posicao);
-    }
-    else{
-        printf("Aluno com código 2 não encontrado na lista\n");
-    }
+    inserirAluno_Nao_Ordenado(&m, aluno1);
+    ALUNO aluno4 = {004, "Camila", 18, 0};
 
-    excluirElemento(&lista, 2);
+    inserirAluno_Nao_Ordenado(&m, aluno1);
+    ALUNO aluno5 = {005, "Carlos", 22, 1};
 
-    imprimirLista(&lista);
+    inserirAluno_Nao_Ordenado(&m, aluno1);
+    mostrarlista(&m);
 
-    printf("Quantidade de alunos: %d\n", QuantidadeElementos(&lista));
-
-    return 0;
+    PosMIdade = MaiorIdade(&m);
+    printf("Cod: %d, Nome: %s, Idade: %d, Filhos: %d \n", m.turma[PosMIdade].alun.cod_aluno, m.turma[PosMIdade].alun.nome, m.turma[PosMIdade].alun.idade, m.turma[PosMIdade].alun.filhos);
 }
